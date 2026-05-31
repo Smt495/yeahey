@@ -96,17 +96,17 @@ def generate_trading_advice(
 
     sector_bull = {
         s: len(sector_news.get(s, {}).get("bullish", []))
-        for s in ["Aviation", "AI", "Space", "Storage"]
+        for s in ["AI", "Space", "Storage"]
     }
     sector_bear = {
         s: len(sector_news.get(s, {}).get("bearish", []))
-        for s in ["Aviation", "AI", "Space", "Storage"]
+        for s in ["AI", "Space", "Storage"]
     }
 
     sector_map = {
         "RKLB": "Space",
         "NOK":  "AI",
-        "CPSH": "Aviation",
+        "CPSH": "Space",
     }
 
     for sym, name in WATCH_STOCKS.items():

@@ -12,10 +12,6 @@ WATCH_STOCKS = {
 }
 
 SECTOR_ETFS = {
-    "Aviation": {
-        "JETS":  "US Global Jets ETF",
-        "XAL":   "AMEX Airline Index (legacy ref)",
-    },
     "AI": {
         "BOTZ":  "Global X Robotics & AI ETF",
         "AIQ":   "Global X AI & Technology ETF",
@@ -47,7 +43,7 @@ MARKET_INDICES = {
     "CL=F":   "Crude Oil WTI Futures",
 }
 
-AVIATION_PEERS = ["DAL", "UAL", "AAL", "LUV", "BA", "JBLU"]
+AVIATION_PEERS = []
 AI_PEERS       = ["NVDA", "MSFT", "GOOGL", "META", "AMD", "INTC", "TSM", "AVGO"]
 SPACE_PEERS    = ["RKLB", "SPCE", "LMT", "RTX", "NOC", "HII", "KTOS", "ASTS"]
 STORAGE_PEERS  = ["MU", "WDC", "STX", "NAND", "NVME"]  # MU/WDC/STX are real tickers
@@ -74,8 +70,7 @@ NEWS_FEEDS = [
     "https://www.cnbc.com/id/100003114/device/rss/rss.html",
     "https://feeds.bloomberg.com/markets/news.rss",
     "https://finance.yahoo.com/news/rssindex",
-    # Aerospace / Aviation
-    "https://www.aviationweek.com/rss",
+    # Space / Defense
     "https://spacenews.com/feed/",
     "https://www.defensenews.com/arc/outboundfeeds/rss/?outputType=xml",
     # Tech / AI
@@ -87,11 +82,6 @@ NEWS_FEEDS = [
 
 # ── Sector-specific search keywords ───────────────────────────────────────────
 SECTOR_KEYWORDS = {
-    "Aviation": [
-        "airline", "aviation", "aerospace", "commercial aviation", "air travel",
-        "jet fuel", "FAA", "IATA", "aircraft", "Boeing", "Airbus", "airport",
-        "passenger traffic", "load factor", "Delta", "United Airlines", "American Airlines",
-    ],
     "AI": [
         "artificial intelligence", "AI", "machine learning", "LLM", "GPU",
         "semiconductor", "data center", "NVIDIA", "OpenAI", "Anthropic",

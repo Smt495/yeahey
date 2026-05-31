@@ -139,8 +139,8 @@ def fetch_all_news() -> list[dict]:
     # Yahoo Finance per-ticker news
     all_symbols = (
         list(WATCH_STOCKS.keys())
-        + ["JETS", "SMH", "BOTZ", "AIQ", "ARKQ"]
-        + ["DAL", "UAL", "NVDA", "MSFT", "BA"]
+        + ["SMH", "BOTZ", "AIQ", "ARKQ", "ARKX", "UFO"]
+        + ["NVDA", "MSFT", "MU", "WDC", "LMT", "RTX", "KTOS"]
     )
     articles.extend(_fetch_yf_stock_news(all_symbols, cutoff))
 

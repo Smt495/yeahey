@@ -150,7 +150,6 @@ def generate_html(
         "sectors": {
             sector: {
                 "label": {
-                    "Aviation": "✈ 商业航空",
                     "AI":       "🤖 AI & 半导体",
                     "Space":    "🚀 商业航天",
                     "Storage":  "💾 存储芯片",
@@ -168,7 +167,7 @@ def generate_html(
                     news_classified.get(sector, {}).get("bearish", [])
                 )[:12],
             }
-            for sector in ["Aviation", "AI", "Space", "Storage"]
+            for sector in ["AI", "Space", "Storage"]
         },
 
         # Macro
