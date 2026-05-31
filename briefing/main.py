@@ -26,6 +26,7 @@ from briefing.collectors.macro import fetch_economic_calendar, fetch_fear_greed,
 from briefing.analyzers.technicals import compute_technicals
 from briefing.analyzers.impact import classify_articles, summarize_market_impact
 from briefing.reporters.html_report import generate_html
+from briefing.reporters.email_sender import send_email
 
 ET = pytz.timezone(TIMEZONE)
 
@@ -98,6 +99,11 @@ def run_briefing(session: str | None = None) -> str:
         options_data=options_data,
         earnings=earnings,
     )
+
+    # ── 9. Email delivery ─────────────────────────────────────────────────────
+    if os.getenv("SMTP_USER") and os.getenv("SMTP_PASS"):
+        log.info("Sending email …")
+        send_email(report_path, session)
 
     elapsed = time.time() - start
     log.info("=== Briefing complete: %s  (%.1fs) ===", report_path, elapsed)
