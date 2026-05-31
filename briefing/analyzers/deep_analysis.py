@@ -182,6 +182,15 @@ def build_deep_analysis(
         overall = "中性"
         outlook = "方向不明，建议观望，等待催化剂出现"
 
+    try:
+        pe = float(pe) if pe is not None else None
+    except (ValueError, TypeError):
+        pe = None
+    try:
+        beta = float(beta) if beta is not None else None
+    except (ValueError, TypeError):
+        beta = None
+
     pe_str = f"，市盈率 {pe:.1f}x" if pe else ""
     beta_str = f"，Beta {beta:.2f}（{'高波动' if beta and beta > 1.5 else '低波动' if beta and beta < 0.8 else '中等波动'}）" if beta else ""
 
