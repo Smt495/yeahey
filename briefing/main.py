@@ -26,6 +26,7 @@ from briefing.collectors.macro import fetch_economic_calendar, fetch_fear_greed,
 from briefing.analyzers.technicals import compute_technicals
 from briefing.analyzers.impact import classify_articles, summarize_market_impact
 from briefing.analyzers.deep_analysis import build_deep_analysis
+from briefing.analyzers.claude_analysis import build_all_claude_analyses
 from briefing.analyzers.trading_advice import (
     generate_trading_advice, scan_strong_stocks, scan_undervalued_stocks
 )
@@ -91,20 +92,31 @@ def run_briefing(session: str | None = None) -> str:
     news_classified = classify_articles(articles)
     impact_summary  = summarize_market_impact(quotes, news_classified)
 
-    # ── 8. Deep per-stock analysis ────────────────────────────────────────────
+    # ── 8. Deep per-stock analysis (Claude API → rule-based fallback) ─────────
     log.info("Building deep analysis …")
+    claude_results = build_all_claude_analyses(
+        watch_stocks=WATCH_STOCKS,
+        quotes=quotes,
+        technicals=technicals,
+        news_classified=news_classified,
+    )
     deep_analysis = {}
     for sym in WATCH_STOCKS:
-        q    = quotes.get(sym, {})
-        tech = technicals.get(sym, {})
-        sym_news = news_classified.get(sym, {})
-        deep_analysis[sym] = build_deep_analysis(
-            symbol=sym,
-            quote=q,
-            tech=tech,
-            bull_news=sym_news.get("bullish", []),
-            bear_news=sym_news.get("bearish", []),
-        )
+        if claude_results.get(sym):
+            log.info("  Using Claude analysis for %s", sym)
+            deep_analysis[sym] = claude_results[sym]
+        else:
+            log.info("  Falling back to rule-based analysis for %s", sym)
+            q        = quotes.get(sym, {})
+            tech     = technicals.get(sym, {})
+            sym_news = news_classified.get(sym, {})
+            deep_analysis[sym] = build_deep_analysis(
+                symbol=sym,
+                quote=q,
+                tech=tech,
+                bull_news=sym_news.get("bullish", []),
+                bear_news=sym_news.get("bearish", []),
+            )
 
     # ── 9. Trading advice + stock scans ───────────────────────────────────────
     log.info("Generating trading advice …")
