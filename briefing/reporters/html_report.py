@@ -60,6 +60,16 @@ def _fmt_mcap(v) -> str:
         return str(v)
 
 
+def _safe_float(v) -> float | None:
+    """Convert any numeric-ish value to float, return None on failure."""
+    if v is None:
+        return None
+    try:
+        return float(v)
+    except (ValueError, TypeError):
+        return None
+
+
 def _pct_color(v) -> str:
     if v is None:
         return "neutral"
@@ -126,9 +136,9 @@ def generate_html(
                 "avg_vol":   _fmt_vol(quotes.get(sym, {}).get("avg_volume")),
                 "vol_ratio": quotes.get(sym, {}).get("vol_ratio"),
                 "mcap":      _fmt_mcap(quotes.get(sym, {}).get("market_cap")),
-                "pe":        quotes.get(sym, {}).get("pe"),
-                "eps":       quotes.get(sym, {}).get("eps"),
-                "beta":      quotes.get(sym, {}).get("beta"),
+                "pe":        _safe_float(quotes.get(sym, {}).get("pe")),
+                "eps":       _safe_float(quotes.get(sym, {}).get("eps")),
+                "beta":      _safe_float(quotes.get(sym, {}).get("beta")),
                 "w52h":      _fmt_price(quotes.get(sym, {}).get("52w_high")),
                 "w52l":      _fmt_price(quotes.get(sym, {}).get("52w_low")),
                 "ret5d":     _fmt_pct(quotes.get(sym, {}).get("ret_5d")),
@@ -187,8 +197,9 @@ def generate_html(
     env.filters["fmt_price"] = _fmt_price
     env.filters["fmt_pct"]   = _fmt_pct
     env.filters["pct_color"] = _pct_color
-    env.filters["sig_color"] = _signal_color
-    env.filters["enumerate"] = enumerate
+    env.filters["sig_color"]   = _signal_color
+    env.filters["enumerate"]   = enumerate
+    env.filters["safe_float"]  = _safe_float
 
     template = env.get_template("briefing.html.jinja2")
     html     = template.render(**ctx)
