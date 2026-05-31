@@ -25,6 +25,10 @@ from briefing.collectors.news import fetch_all_news
 from briefing.collectors.macro import fetch_economic_calendar, fetch_fear_greed, fetch_yield_curve
 from briefing.analyzers.technicals import compute_technicals
 from briefing.analyzers.impact import classify_articles, summarize_market_impact
+from briefing.analyzers.deep_analysis import build_deep_analysis
+from briefing.analyzers.trading_advice import (
+    generate_trading_advice, scan_strong_stocks, scan_undervalued_stocks
+)
 from briefing.reporters.html_report import generate_html
 from briefing.reporters.email_sender import send_email
 
@@ -87,7 +91,36 @@ def run_briefing(session: str | None = None) -> str:
     news_classified = classify_articles(articles)
     impact_summary  = summarize_market_impact(quotes, news_classified)
 
-    # ── 8. Render report ──────────────────────────────────────────────────────
+    # ── 8. Deep per-stock analysis ────────────────────────────────────────────
+    log.info("Building deep analysis …")
+    deep_analysis = {}
+    for sym in WATCH_STOCKS:
+        q    = quotes.get(sym, {})
+        tech = technicals.get(sym, {})
+        sym_news = news_classified.get(sym, {})
+        deep_analysis[sym] = build_deep_analysis(
+            symbol=sym,
+            quote=q,
+            tech=tech,
+            bull_news=sym_news.get("bullish", []),
+            bear_news=sym_news.get("bearish", []),
+        )
+
+    # ── 9. Trading advice + stock scans ───────────────────────────────────────
+    log.info("Generating trading advice …")
+    trading_advice = generate_trading_advice(
+        quotes=quotes,
+        technicals=technicals,
+        news_classified=news_classified,
+        impact_summary=impact_summary,
+        sector_news=news_classified,
+    )
+    log.info("Scanning strong stocks …")
+    strong_stocks = scan_strong_stocks(news_classified)
+    log.info("Scanning undervalued stocks …")
+    undervalued_stocks = scan_undervalued_stocks(news_classified)
+
+    # ── 10. Render report ─────────────────────────────────────────────────────
     log.info("Rendering HTML report …")
     report_path = generate_html(
         session=session,
@@ -98,6 +131,10 @@ def run_briefing(session: str | None = None) -> str:
         macro_data=macro_data,
         options_data=options_data,
         earnings=earnings,
+        deep_analysis=deep_analysis,
+        trading_advice=trading_advice,
+        strong_stocks=strong_stocks,
+        undervalued_stocks=undervalued_stocks,
     )
 
     # ── 9. Email delivery ─────────────────────────────────────────────────────

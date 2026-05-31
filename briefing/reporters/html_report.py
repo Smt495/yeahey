@@ -82,6 +82,10 @@ def generate_html(
     macro_data: dict,
     options_data: dict,
     earnings: list,
+    deep_analysis: dict | None = None,
+    trading_advice: list | None = None,
+    strong_stocks: list | None = None,
+    undervalued_stocks: list | None = None,
 ) -> str:
     """Render and write HTML report; return the output file path."""
     now = datetime.now(ET)
@@ -107,7 +111,7 @@ def generate_html(
                         "GLD", "CL=F", "TLT", "DX-Y.NYB"]
         ],
 
-        # Watch stocks
+        # Watch stocks (enriched with deep analysis)
         "watch_stocks": [
             {
                 "symbol":    sym,
@@ -130,26 +134,51 @@ def generate_html(
                 "ret5d":     _fmt_pct(quotes.get(sym, {}).get("ret_5d")),
                 "tech":      technicals.get(sym, {}),
                 "options":   options_data.get(sym),
-                "news_bull": news_classified.get(sym, {}).get("bullish", [])[:5],
-                "news_bear": news_classified.get(sym, {}).get("bearish", [])[:5],
-                "news_neut": news_classified.get(sym, {}).get("neutral", [])[:3],
+                # All news for reference links only (shown at bottom of section)
+                "all_news":  (
+                    news_classified.get(sym, {}).get("bullish", []) +
+                    news_classified.get(sym, {}).get("bearish", []) +
+                    news_classified.get(sym, {}).get("neutral", [])
+                )[:12],
                 "impact":    impact_summary.get(sym, {}),
+                "deep":      (deep_analysis or {}).get(sym, {}),
             }
             for sym in WATCH_STOCKS
         ],
 
-        # Sector analysis
+        # Sector analysis (all 4 sectors)
         "sectors": {
             sector: {
-                "news_bull": news_classified.get(sector, {}).get("bullish", [])[:6],
-                "news_bear": news_classified.get(sector, {}).get("bearish", [])[:6],
+                "label": {
+                    "Aviation": "✈ 商业航空",
+                    "AI":       "🤖 AI & 半导体",
+                    "Space":    "🚀 商业航天",
+                    "Storage":  "💾 存储芯片",
+                }.get(sector, sector),
+                "bull_points": [
+                    f"[{a.get('impact','')}] {a['title']} （{a.get('source','')}）"
+                    for a in news_classified.get(sector, {}).get("bullish", [])[:8]
+                ],
+                "bear_points": [
+                    f"[{a.get('impact','')}] {a['title']} （{a.get('source','')}）"
+                    for a in news_classified.get(sector, {}).get("bearish", [])[:8]
+                ],
+                "all_news": (
+                    news_classified.get(sector, {}).get("bullish", []) +
+                    news_classified.get(sector, {}).get("bearish", [])
+                )[:12],
             }
-            for sector in ["Aviation", "AI"]
+            for sector in ["Aviation", "AI", "Space", "Storage"]
         },
 
         # Macro
         "macro":    macro_data,
         "earnings": earnings,
+
+        # New panels
+        "trading_advice":    trading_advice or [],
+        "strong_stocks":     strong_stocks or [],
+        "undervalued_stocks": undervalued_stocks or [],
     }
 
     env = Environment(
@@ -160,6 +189,7 @@ def generate_html(
     env.filters["fmt_pct"]   = _fmt_pct
     env.filters["pct_color"] = _pct_color
     env.filters["sig_color"] = _signal_color
+    env.filters["enumerate"] = enumerate
 
     template = env.get_template("briefing.html.jinja2")
     html     = template.render(**ctx)

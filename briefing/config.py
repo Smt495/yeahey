@@ -20,8 +20,16 @@ SECTOR_ETFS = {
         "BOTZ":  "Global X Robotics & AI ETF",
         "AIQ":   "Global X AI & Technology ETF",
         "ARKQ":  "ARK Autonomous Tech & Robotics ETF",
-        "SOXS":  "Direxion Semi Bear 3x (ref)",
         "SMH":   "VanEck Semiconductor ETF",
+    },
+    "Space": {
+        "ARKX":  "ARK Space Exploration ETF",
+        "UFO":   "Procure Space ETF",
+    },
+    "Storage": {
+        "MU":    "Micron Technology",
+        "WDC":   "Western Digital",
+        "STX":   "Seagate Technology",
     },
 }
 
@@ -39,8 +47,23 @@ MARKET_INDICES = {
     "CL=F":   "Crude Oil WTI Futures",
 }
 
-AVIATION_PEERS = ["DAL", "UAL", "AAL", "LUV", "BA", "AIR.PA", "SAVE", "JBLU"]
+AVIATION_PEERS = ["DAL", "UAL", "AAL", "LUV", "BA", "JBLU"]
 AI_PEERS       = ["NVDA", "MSFT", "GOOGL", "META", "AMD", "INTC", "TSM", "AVGO"]
+SPACE_PEERS    = ["RKLB", "SPCE", "LMT", "RTX", "NOC", "HII", "KTOS", "ASTS"]
+STORAGE_PEERS  = ["MU", "WDC", "STX", "NAND", "NVME"]  # MU/WDC/STX are real tickers
+
+# Broader scan universe for "Strong Stock of the Day"
+STRONG_STOCK_UNIVERSE = [
+    "NVDA","MSFT","AAPL","GOOGL","META","AMZN","TSLA","AMD","AVGO","TSM",
+    "JPM","GS","BAC","WFC","MS","BLK",
+    "DAL","UAL","BA","LMT","RTX","NOC",
+    "RKLB","ASTS","KTOS","SPCE",
+    "MU","WDC","STX","AMAT","KLAC","LRCX",
+    "XOM","CVX","SLB","OXY",
+    "UNH","LLY","JNJ","PFE","MRNA",
+    "NOK","ERIC","QCOM","ANET","CSCO",
+    "CPSH","MSTR","PLTR","IONQ","QUBT",
+]
 
 # ── News RSS feeds ─────────────────────────────────────────────────────────────
 NEWS_FEEDS = [
@@ -67,17 +90,31 @@ SECTOR_KEYWORDS = {
     "Aviation": [
         "airline", "aviation", "aerospace", "commercial aviation", "air travel",
         "jet fuel", "FAA", "IATA", "aircraft", "Boeing", "Airbus", "airport",
-        "passenger traffic", "load factor",
+        "passenger traffic", "load factor", "Delta", "United Airlines", "American Airlines",
     ],
     "AI": [
         "artificial intelligence", "AI", "machine learning", "LLM", "GPU",
         "semiconductor", "data center", "NVIDIA", "OpenAI", "Anthropic",
-        "generative AI", "inference", "neural network",
+        "generative AI", "inference", "neural network", "foundation model",
+        "transformer", "compute", "AI chip", "training run",
+    ],
+    "Space": [
+        "space launch", "rocket", "satellite", "orbit", "SpaceX", "Rocket Lab",
+        "commercial space", "launch vehicle", "reusable rocket", "LEO", "GEO",
+        "space station", "NASA", "DARPA", "NRO", "space force", "Starlink",
+        "neutron", "electron", "Falcon", "constellation",
+    ],
+    "Storage": [
+        "NAND flash", "DRAM", "memory chip", "storage", "SSD", "HDD",
+        "Micron", "Western Digital", "Seagate", "hard drive", "data storage",
+        "memory pricing", "oversupply", "inventory correction", "HBM",
+        "high bandwidth memory", "flash memory",
     ],
     "Macro": [
         "Federal Reserve", "Fed rate", "CPI", "inflation", "GDP", "unemployment",
         "tariff", "trade war", "recession", "earnings", "interest rate",
         "Treasury yield", "FOMC", "jobs report", "nonfarm payroll",
+        "Jerome Powell", "rate cut", "rate hike", "quantitative tightening",
     ],
 }
 
