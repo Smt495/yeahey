@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>美股每日简报 — {{ date_str }} [{{ session }}]</title>
+<style>
+  :root {
+    --bg:       #0d1117;
+    --surface:  #161b22;
+    --border:   #30363d;
+    --text:     #c9d1d9;
+    --muted:    #8b949e;
+    --pos:      #3fb950;
+    --neg:      #f85149;
+    --neu:      #d29922;
+    --accent:   #58a6ff;
+    --tag-bull: #1a3d28;
+    --tag-bear: #3d1a1a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+  header h1 { font-size: 20px; font-weight: 700; color: var(--accent); }
+  header .meta { color: var(--muted); font-size: 12px; }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+  .section-title { font-size: 16px; font-weight: 700; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin: 24px 0 12px; text-transform: uppercase; letter-spacing: .5px; }
+
+  /* Index bar */
+  .index-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .index-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px 14px; min-width: 130px; }
+  .index-card .sym { font-size: 11px; color: var(--muted); font-weight: 600; }
+  .index-card .price { font-size: 15px; font-weight: 700; }
+  .index-card .chg { font-size: 12px; font-weight: 600; }
+  .positive { color: var(--pos) !important; }
+  .negative { color: var(--neg) !important; }
+  .neutral  { color: var(--neu) !important; }
+
+  /* Watch stock cards */
+  .stock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); gap: 18px; }
+  .stock-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .stock-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .stock-sym { font-size: 22px; font-weight: 800; color: var(--accent); }
+  .stock-name { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .price-block { text-align: right; }
+  .price-block .price { font-size: 22px; font-weight: 700; }
+  .price-block .chg   { font-size: 14px; font-weight: 600; }
+
+  table.stats { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 12px; }
+  table.stats td { padding: 3px 6px; }
+  table.stats td:first-child { color: var(--muted); width: 38%; }
+  table.stats tr:nth-child(even) td { background: rgba(255,255,255,.03); }
+
+  .tech-block { margin-top: 10px; }
+  .tech-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .tech-pill { background: #21262d; border-radius: 4px; padding: 2px 8px; font-size: 11px; }
+  .signal-list { margin-top: 6px; }
+  .signal-item { font-size: 12px; padding: 2px 0; }
+  .signal-item.bullish { color: var(--pos); }
+  .signal-item.bearish { color: var(--neg); }
+
+  .news-block { margin-top: 12px; }
+  .news-label { font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 4px; }
+  .news-label.bull { color: var(--pos); }
+  .news-label.bear { color: var(--neg); }
+  .news-label.neut { color: var(--muted); }
+  .news-item { margin-bottom: 6px; padding: 6px 10px; border-radius: 4px; border-left: 3px solid transparent; }
+  .news-item.bullish { background: var(--tag-bull); border-color: var(--pos); }
+  .news-item.bearish { background: var(--tag-bear); border-color: var(--neg); }
+  .news-item.neutral { background: #1c2128; border-color: var(--border); }
+  .news-item a { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 13px; }
+  .news-item a:hover { text-decoration: underline; }
+  .news-item .meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .impact-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 3px; margin-left: 6px; }
+  .impact-HIGH   { background: #5c1c1c; color: #ff6b6b; }
+  .impact-MEDIUM { background: #3d3000; color: #d29922; }
+  .impact-LOW    { background: #1c2128; color: var(--muted); }
+
+  /* Macro section */
+  .macro-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .macro-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+  .macro-card h3 { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+
+  .calendar-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .calendar-table th { background: #21262d; padding: 5px 8px; text-align: left; color: var(--muted); }
+  .calendar-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); }
+  .calendar-table tr:last-child td { border-bottom: none; }
+
+  /* Sector section */
+  .sector-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 900px) { .sector-cols { grid-template-columns: 1fr; } }
+
+  footer { text-align: center; color: var(--muted); font-size: 11px; padding: 24px; border-top: 1px solid var(--border); margin-top: 32px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>📊 美股每日简报</h1>
+    <div class="meta">板块: 商业航空 &amp; AI | 个股: RKLB · NOK · CPSH | 会话: {{ session }}</div>
+  </div>
+  <div class="meta" style="text-align:right">{{ generated_at }}</div>
+</header>
+
+<div class="container">
+
+  {# ── Market Overview ───────────────────────────────────────── #}
+  <div class="section-title">市场概览</div>
+  <div class="index-bar">
+    {% for idx in indices %}
+    <div class="index-card">
+      <div class="sym">{{ idx.symbol }}</div>
+      <div class="sym" style="font-size:10px;color:var(--muted)">{{ idx.name }}</div>
+      <div class="price {{ idx.color }}">{{ idx.price }}</div>
+      <div class="chg {{ idx.color }}">{{ idx.chg }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ── Macro ─────────────────────────────────────────────────── #}
+  {% if macro %}
+  <div class="section-title">宏观数据</div>
+  <div class="macro-grid">
+
+    {# Fear & Greed #}
+    {% if macro.fear_greed %}
+    <div class="macro-card">
+      <h3>Fear &amp; Greed Index (CNN)</h3>
+      {% set fg = macro.fear_greed %}
+      <div style="font-size:28px;font-weight:800;color:
+        {% if fg.score %}
+          {% if fg.score >= 60 %}var(--pos){% elif fg.score <= 40 %}var(--neg){% else %}var(--neu){% endif %}
+        {% else %}var(--muted){% endif %}
+      ">{{ fg.score or '—' }}</div>
+      <div style="color:var(--muted);font-size:13px">{{ fg.rating or '' }}</div>
+    </div>
+    {% endif %}
+
+    {# Yield Curve #}
+    {% if macro.yield_curve %}
+    <div class="macro-card">
+      <h3>美债收益率曲线</h3>
+      {% set yc = macro.yield_curve %}
+      {% for mat, val in yc.yields.items() %}
+      <div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0">
+        <span style="color:var(--muted)">{{ mat }}</span><span>{{ val }}%</span>
+      </div>
+      {% endfor %}
+      {% if yc.inverted %}<div style="color:var(--neg);font-size:12px;margin-top:6px">⚠ 收益率曲线倒挂</div>{% endif %}
+    </div>
+    {% endif %}
+
+    {# Economic Calendar #}
+    {% if macro.calendar %}
+    <div class="macro-card" style="grid-column: span 2">
+      <h3>近期经济日历（美国）</h3>
+      <table class="calendar-table">
+        <tr><th>日期</th><th>时间</th><th>事件</th><th>预期</th><th>前值</th><th>实际</th></tr>
+        {% for ev in macro.calendar[:12] %}
+        <tr>
+          <td>{{ ev.date }}</td>
+          <td>{{ ev.time }}</td>
+          <td>{{ ev.event }}</td>
+          <td>{{ ev.forecast }}</td>
+          <td>{{ ev.previous }}</td>
+          <td style="font-weight:700">{{ ev.actual }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+    {% endif %}
+
+  </div>
+  {% endif %}
+
+  {# ── Watch Stocks ──────────────────────────────────────────── #}
+  <div class="section-title">个股追踪: RKLB · NOK · CPSH</div>
+  <div class="stock-grid">
+  {% for s in watch_stocks %}
+  <div class="stock-card">
+    <div class="stock-header">
+      <div>
+        <div class="stock-sym">{{ s.symbol }}</div>
+        <div class="stock-name">{{ s.name }}</div>
+        {% if s.impact and s.impact.bias %}
+        <div style="margin-top:4px;font-size:12px">
+          偏向:
+          <span class="{% if s.impact.bias == 'Bullish' %}positive{% elif s.impact.bias == 'Bearish' %}negative{% else %}neutral{% endif %}">
+            {{ '📈' if s.impact.bias == 'Bullish' else '📉' if s.impact.bias == 'Bearish' else '➡' }} {{ s.impact.bias }}
+          </span>
+        </div>
+        {% endif %}
+      </div>
+      <div class="price-block">
+        <div class="price {{ s.color }}">{{ s.price }}</div>
+        <div class="chg {{ s.color }}">{{ s.chg }}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">5日: {{ s.ret5d }}</div>
+      </div>
+    </div>
+
+    {# OHLV stats #}
+    <table class="stats">
+      <tr><td>开盘</td><td>{{ s.open }}</td><td>市值</td><td>{{ s.mcap }}</td></tr>
+      <tr><td>最高</td><td>{{ s.high }}</td><td>市盈率</td><td>{{ s.pe or '—' }}</td></tr>
+      <tr><td>最低</td><td>{{ s.low }}</td><td>EPS</td><td>{{ s.eps or '—' }}</td></tr>
+      <tr><td>成交量</td><td>{{ s.volume }}</td><td>Beta</td><td>{{ s.beta or '—' }}</td></tr>
+      <tr><td>均量</td><td>{{ s.avg_vol }}</td><td>量比</td>
+        <td {% if s.vol_ratio and s.vol_ratio > 2 %}style="color:var(--neg);font-weight:700"{% endif %}>
+          {{ '%.2fx'|format(s.vol_ratio) if s.vol_ratio else '—' }}
+        </td>
+      </tr>
+      <tr><td>52周高</td><td>{{ s.w52h }}</td><td>52周低</td><td>{{ s.w52l }}</td></tr>
+    </table>
+
+    {# Technical block #}
+    {% if s.tech and not s.tech.error %}
+    <div class="tech-block">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px">技术指标</div>
+      <div class="tech-row">
+        <span class="tech-pill">RSI: <b {% if s.tech.rsi > 70 %}style="color:var(--neg)"{% elif s.tech.rsi < 30 %}style="color:var(--pos)"{% endif %}>{{ '%.1f'|format(s.tech.rsi) }}</b></span>
+        <span class="tech-pill">MACD: {{ '%.4f'|format(s.tech.macd) }}</span>
+        <span class="tech-pill">ATR: {{ '%.4f'|format(s.tech.atr) }}</span>
+      </div>
+      <div class="tech-row">
+        <span class="tech-pill">EMA9: {{ '%.4f'|format(s.tech.ema9) }}</span>
+        <span class="tech-pill">EMA21: {{ '%.4f'|format(s.tech.ema21) }}</span>
+        {% if s.tech.sma50 %}<span class="tech-pill">SMA50: {{ '%.4f'|format(s.tech.sma50) }}</span>{% endif %}
+        {% if s.tech.sma200 %}<span class="tech-pill">SMA200: {{ '%.4f'|format(s.tech.sma200) }}</span>{% endif %}
+      </div>
+      <div class="tech-row">
+        <span class="tech-pill">BB上: {{ '%.4f'|format(s.tech.bb_upper) }}</span>
+        <span class="tech-pill">BB中: {{ '%.4f'|format(s.tech.bb_mid) }}</span>
+        <span class="tech-pill">BB下: {{ '%.4f'|format(s.tech.bb_lower) }}</span>
+      </div>
+      {% if s.tech.support %}<div style="font-size:11px;color:var(--muted)">支撑: {{ '%.4f'|format(s.tech.support) }} | 阻力: {{ '%.4f'|format(s.tech.resistance) }}</div>{% endif %}
+      <div style="font-size:12px;color:var(--accent);margin-top:4px">趋势: {{ s.tech.trend }}</div>
+      {% if s.tech.signals %}
+      <div class="signal-list">
+        {% for sig in s.tech.signals %}
+        <div class="signal-item {{ sig.type }}">{{ '▲' if sig.type == 'bullish' else '▼' }} {{ sig.msg }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {# Options #}
+    {% if s.options %}
+    <div style="margin-top:10px;font-size:12px">
+      <span style="color:var(--muted)">期权 ({{ s.options.expiry }}): </span>
+      Call OI {{ s.options.call_oi | default('—') }} &nbsp;|&nbsp; Put OI {{ s.options.put_oi | default('—') }}
+      &nbsp;|&nbsp; P/C比 <b {% if s.options.put_call_ratio and s.options.put_call_ratio > 1 %}style="color:var(--neg)"{% else %}style="color:var(--pos)"{% endif %}>{{ '%.2f'|format(s.options.put_call_ratio) if s.options.put_call_ratio else '—' }}</b>
+    </div>
+    {% endif %}
+
+    {# Risk flags #}
+    {% if s.impact and s.impact.flags %}
+    <div style="margin-top:10px">
+      {% for flag in s.impact.flags %}
+      <div style="font-size:12px;color:var(--neu);padding:2px 0">⚠ {{ flag }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {# News #}
+    <div class="news-block">
+      {% if s.news_bull %}
+      <div class="news-label bull">📈 利好 ({{ s.news_bull|length }})</div>
+      {% for art in s.news_bull %}
+      <div class="news-item bullish">
+        <a href="{{ art.url }}" target="_blank" rel="noopener">{{ art.title }}</a>
+        <span class="impact-badge impact-{{ art.impact }}">{{ art.impact }}</span>
+        <div class="meta">{{ art.source }}{% if art.published %} · {{ art.published.strftime('%m-%d %H:%M') }}{% endif %}</div>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      {% if s.news_bear %}
+      <div class="news-label bear" style="margin-top:8px">📉 利空 ({{ s.news_bear|length }})</div>
+      {% for art in s.news_bear %}
+      <div class="news-item bearish">
+        <a href="{{ art.url }}" target="_blank" rel="noopener">{{ art.title }}</a>
+        <span class="impact-badge impact-{{ art.impact }}">{{ art.impact }}</span>
+        <div class="meta">{{ art.source }}{% if art.published %} · {{ art.published.strftime('%m-%d %H:%M') }}{% endif %}</div>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      {% if s.news_neut %}
+      <div class="news-label neut" style="margin-top:8px">📰 中性</div>
+      {% for art in s.news_neut %}
+      <div class="news-item neutral">
+        <a href="{{ art.url }}" target="_blank" rel="noopener">{{ art.title }}</a>
+        <div class="meta">{{ art.source }}{% if art.published %} · {{ art.published.strftime('%m-%d %H:%M') }}{% endif %}</div>
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  </div>
+
+  {# ── Sectors ──────────────────────────────────────────────── #}
+  <div class="section-title">板块动态</div>
+  <div class="sector-cols">
+  {% for sector, data in sectors.items() %}
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px">
+    <div style="font-size:15px;font-weight:700;color:var(--accent);margin-bottom:10px">
+      {{ '✈' if sector == 'Aviation' else '🤖' }} {{ '商业航空' if sector == 'Aviation' else 'AI & 半导体' }}
+    </div>
+    {% if data.news_bull %}
+    <div class="news-label bull">📈 利好</div>
+    {% for art in data.news_bull %}
+    <div class="news-item bullish">
+      <a href="{{ art.url }}" target="_blank" rel="noopener">{{ art.title }}</a>
+      <span class="impact-badge impact-{{ art.impact }}">{{ art.impact }}</span>
+      <div class="meta">{{ art.source }}{% if art.published %} · {{ art.published.strftime('%m-%d %H:%M') }}{% endif %}</div>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% if data.news_bear %}
+    <div class="news-label bear" style="margin-top:8px">📉 利空</div>
+    {% for art in data.news_bear %}
+    <div class="news-item bearish">
+      <a href="{{ art.url }}" target="_blank" rel="noopener">{{ art.title }}</a>
+      <span class="impact-badge impact-{{ art.impact }}">{{ art.impact }}</span>
+      <div class="meta">{{ art.source }}{% if art.published %} · {{ art.published.strftime('%m-%d %H:%M') }}{% endif %}</div>
+    </div>
+    {% endfor %}
+    {% endif %}
+  </div>
+  {% endfor %}
+  </div>
+
+  {# ── Earnings ─────────────────────────────────────────────── #}
+  {% if earnings %}
+  <div class="section-title">财报日期</div>
+  {% for e in earnings %}
+  <div style="font-size:13px;padding:4px 0"><b>{{ e.symbol }}</b>: {{ e.dates | join(' / ') }}</div>
+  {% endfor %}
+  {% endif %}
+
+</div>
+
+<footer>
+  美股每日简报 · 数据源: Yahoo Finance, RSS聚合 · 仅供参考，不构成投资建议<br>
+  生成时间: {{ generated_at }}
+</footer>
+</body>
+</html>
